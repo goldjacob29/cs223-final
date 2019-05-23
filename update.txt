@@ -1,0 +1,47 @@
+*Status Update for Final Project*
+
+So far, we've made good progress on our final project building the game 2048 in 
+Elm. Our goal so far has been to build all main gameplay logic and leave the final
+graphics for the next week. 
+
+After originally using a matrix library for our game board, we decided to refactor
+our code to use a list of lists instead as we realized it would be necessary to 
+have access to the distrinct rows for the transitions. The Grid is our only main
+data structure, and the entirety of our model as of now, with a couple other 
+type aliases we added for programming ease. 
+
+Using the homework 2 Pi.elm file as a starting point, we followed the same format
+with all of the main Elm MVC functions and edited them to suit our needs. As mentioned,
+our model right now consists solely of the board but this will change over the next 
+week when we add a total_score and possibly more to it. Our subscription function
+uses the Browser.Events library to take in keystrokes and convert it to a Sub Msg
+to be used by update. As of now, Update() takes in one of the four arrow key directions
+and recursively calls update with a Tick, while any other keystoke simply does nothing. 
+
+Similar to homework 2, a call to update with a Tick randomly generates a "play"
+which consists of an index (into the flattened list of lists) and a num (either
+a 2 or 4). These are then used to place a newly populated tile in after the move 
+happens. 
+
+For now, we are simply displaying the list as bullet points in our .html file but
+once the gameaplay logic is done we will be spending most of our time focusing on 
+fixing up the graphics so they are as similar to the original game as possible. 
+
+Still to do:
+-Finish the combine and shift functions
+-Which will then allow us to build out our Left/Right/Up/Down movements
+-At that point all game play logic will be done and we can focus on the View. 
+-Once we clean up the view, we will start working on minor additions to the code
+that will make it more similar to the actual game like
+	- A score counter
+	- A new game/reset button
+	- Importing images to use in our graphcis
+
+
+
+
+
+Notes to you (delete this):
+-I think we should/could rename "Tick" as that seems more fitting for the Time stuff
+but we're not using Time in this so the word doesnt really make sesne
+-Should we delete haskell stuff from bottom since that's just copied
