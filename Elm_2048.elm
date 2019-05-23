@@ -1,6 +1,5 @@
 module Elm_2048 exposing (..)
 
-import Matrix
 import Browser
 import Browser.Events
 import Html exposing (Html)
@@ -10,15 +9,20 @@ import Debug
 import Html.Attributes
 import Array
 import Json.Decode as Decode
+import List.Extra
 
 -----------------------------------------------------
 -- Types and Aliases
 -----------------------------------------------------
 
-type alias Model =
-  { board : Matrix.Matrix Int }
+type alias Grid = List (List Num)
 
-type Msg = Tick | RandomPlay Play
+type alias Model =
+  { board : Grid }
+
+type Direction = Left | Right | Up | Down | Other
+
+type Msg = Tick | RandomPlay Play | Keystroke Direction
 
 type alias Play =
   {index : Index, num : Num}
@@ -34,23 +38,23 @@ type alias Flags = ()
 -- List Helper Functions
 -----------------------------------------------------
 
-myHead : List a -> a
-myHead ls =
-  case ls of
-    (h::_) -> h
-    _ -> Debug.todo "error"
-
-myTail : List a -> List a
-myTail ls =
-  case ls of
-    (_::t) -> t
-    _ -> Debug.todo "error"
-
-transpose : List (List a) -> List (List a)
-transpose ls =
-  case ls of
-    ([]::_) -> []
-    _ -> (List.map myHead ls) :: transpose (List.map myTail ls)
+-- myHead : List a -> a
+-- myHead ls =
+--   case ls of
+--     (h::_) -> h
+--     _ -> Debug.todo "error"
+--
+-- myTail : List a -> List a
+-- myTail ls =
+--   case ls of
+--     (_::t) -> t
+--     _ -> Debug.todo "error"
+--
+-- transpose : List (List a) -> List (List a)
+-- transpose ls =
+--   case ls of
+--     ([]::_) -> []
+--     _ -> (List.map myHead ls) :: transpose (List.map myTail ls)
 
 -- find elem at index i
 indexList : Index -> List a -> a
@@ -82,6 +86,13 @@ initModel = {board=emptyBoard}
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+    Keystroke dir ->
+      case dir of
+        Left  -> update Tick model
+        Right -> update Tick model
+        Up    -> update Tick model
+        Down  -> update Tick model
+        Other -> (model, Cmd.none)
     Tick ->
       let empties = findEmpties model.board
       in (model, Random.generate RandomPlay (playGenerator empties))
@@ -92,22 +103,37 @@ update msg model =
           newModel = {board = newBoard}
       in (newModel, Cmd.none)
 
+
+keyDecoder : Decode.Decoder Direction
+keyDecoder =
+  Decode.map toDirection (Decode.field "key" Decode.string)
+
+toDirection : String -> Direction
+toDirection string =
+  case string of
+    "ArrowLeft" -> Left
+    "ArrowRight" -> Right
+    "ArrowUp" -> Up
+    "ArrowDown" ->  Down
+    _ -> Other
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
-   Browser.Events.onKeyDown (Decode.map (\key -> Tick) keyDecoder)
+  Sub.batch
+        [ Browser.Events.onKeyDown (Decode.map Keystroke keyDecoder)
+        ]
+   -- Browser.Events.onKeyDown (Decode.map (\key -> Tick) keyDecoder)
 
 view : Model -> Html Msg
-view model =
-  let boardList = Array.toList (Matrix.toArray model.board)
-  in renderList boardList
+view model = renderList (flatten model.board)
 
 -----------------------------------------------------
 -- Other Helpers
 -----------------------------------------------------
 
 -- 0 = empty
-emptyBoard : Matrix.Matrix Num
-emptyBoard = Matrix.repeat 4 4 0
+emptyBoard : Grid
+emptyBoard = List.repeat 4 [0,0,0,0]
 
 locToIndex : Loc -> Index
 locToIndex loc = loc.row * 4 + loc.col
@@ -129,10 +155,10 @@ findEmptyIndices nums index =
         findEmptyIndices rest (index+1)
 
 
-findEmpties : Matrix.Matrix Num -> List Index
+findEmpties : Grid -> List Index
 findEmpties board =
-  let boardList = Array.toList (Matrix.toArray board)
-  in findEmptyIndices boardList 0
+  let flatBoard = List.concat board
+  in findEmptyIndices flatBoard 0
 
 
 playGenerator : List Index -> Generator Play
@@ -141,13 +167,29 @@ playGenerator empties =
   in Random.map2 Play (Random.int 0 (n-1)) (Random.weighted (75, 2) [(25,4)])
 
 
-placeVal : Loc -> Num -> Matrix.Matrix Num -> Matrix.Matrix Num
-placeVal loc num board = Matrix.set loc.col loc.row num board
+placeVal : Loc -> Num -> Grid -> Grid
+placeVal loc num board =
+  let flatInserted = List.Extra.setAt (locToIndex loc) num (flatten board)
+  in unFlatten flatInserted
 
-keyDecoder : Decode.Decoder String
-keyDecoder =
-  Decode.field "key" Decode.string
+flatten : Grid -> List Num
+flatten board = List.concat board
+
+unFlatten : List Num -> Grid
+unFlatten flatBoard = List.Extra.groupsOf 4 flatBoard
 
 renderList lst =
   Html.ul []
     (List.map (\l -> Html.li [] [ Html.text (String.fromInt l)]) lst)
+--
+-- combine : List Num -> List Num
+-- combine row =
+--   case row of
+--     [] -> []
+--     (x::y::rest) -> if x==y then (2*x) :: combine rest else (x::y::(combine rest))
+--
+--
+-- shift l = take (length l) $ combine (filter (>0) l) ++ [0,0..]
+-- shift l =
+--   let ls =
+--   in List.take (List.length l) ls
