@@ -23,7 +23,7 @@ type alias Model =
 
 type Direction = Left | Right | Up | Down | Other
 
-type Msg = Tick | RandomPlay Play | Keystroke Direction
+type Msg = Tick | RandomPlay Play | Keystroke Direction | Gameover
 
 type alias Play =
   {index : Index, num : Num}
@@ -40,10 +40,10 @@ type alias Flags = ()
 -----------------------------------------------------
 
 -- find elem at index i
-indexList : Index -> List a -> a
+indexList : Index -> List Num -> Num
 indexList i ls =
   case (i, ls) of
-    (_, [])      -> Debug.todo "error"
+    (_, [])      -> -1
     (0, l::_)    -> l
     (_, _::rest) -> indexList (i-1) rest
 
@@ -89,10 +89,23 @@ update msg model =
       in (model, Random.generate RandomPlay (playGenerator empties))
     RandomPlay {index, num} ->
       let empties = findEmpties model.board
-          loc = indexToLoc (indexList index empties)
+          elem = indexList index empties
+      in
+        if elem == -1 then
+          if not (movesExist model.board) then
+            update Gameover model
+          else
+            (model, Cmd.none)
+        else
+        let
+          loc = indexToLoc (elem)
           newBoard = placeVal loc num model.board
           newModel = {board = newBoard}
-      in (newModel, Cmd.none)
+        in (newModel, Cmd.none)
+    Gameover -> init ()
+
+movesExist : Grid -> Bool
+movesExist = Debug.todo "todo movesExist"
 
 
 keyDecoder : Decode.Decoder Direction
