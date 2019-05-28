@@ -105,7 +105,7 @@ update msg model =
     Gameover -> init ()
 
 movesExist : Grid -> Bool
-movesExist = Debug.todo "todo movesExist"
+movesExist g = False
 
 
 keyDecoder : Decode.Decoder Direction
