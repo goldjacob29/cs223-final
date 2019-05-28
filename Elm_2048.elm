@@ -125,16 +125,16 @@ subscriptions model =
    -- Browser.Events.onKeyDown (Decode.map (\key -> Tick) keyDecoder)
 
 view : Model -> Html Msg
-view model = 
+view model =
   let
     rowViews = List.map viewRow model.board
   in
      Html.div [] [ Html.div [] rowViews ]
 
 viewRow : List Num -> Html Msg
-viewRow row = 
+viewRow row =
   let
-    rowView = List.map viewCell row 
+    rowView = List.map viewCell row
   in
       Html.div [] rowView
 
@@ -197,15 +197,23 @@ flatten board = List.concat board
 unFlatten : List Num -> Grid
 unFlatten flatBoard = List.Extra.groupsOf 4 flatBoard
 
+combine : List Num -> List Num
+combine row =
+  case row of
+    [] -> []
+    (x::y::rest) -> if x==y then (2*x) :: combine rest else (x::y::(combine rest))
+    (x::rest) -> x :: combine rest
 
+reflect ls = List.map List.reverse ls
 
--- combine : List Num -> List Num
--- combine row =
---   case row of
---     [] -> []
---     (x::y::rest) -> if x==y then (2*x) :: combine rest else (x::y::(combine rest))
---     (x::rest) ->
---
--- shift l =
---   let ls =
---   in List.take (List.length l) ls
+shift ls =
+  let nonzero = List.filter (\x -> x > 0) ls
+      combined = combine nonzero
+      numZeroes = 4 - List.length combined
+      zeroes = List.repeat numZeroes 0
+  in combined ++ zeroes
+
+left ls  = List.map shift ls
+right ls = (reflect << left << reflect) ls
+up ls    = (List.Extra.transpose << left << List.Extra.transpose) ls
+down ls  = (List.Extra.transpose << right << List.Extra.transpose) ls
