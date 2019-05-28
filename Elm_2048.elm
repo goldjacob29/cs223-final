@@ -39,24 +39,6 @@ type alias Flags = ()
 -- List Helper Functions
 -----------------------------------------------------
 
--- myHead : List a -> a
--- myHead ls =
---   case ls of
---     (h::_) -> h
---     _ -> Debug.todo "error"
---
--- myTail : List a -> List a
--- myTail ls =
---   case ls of
---     (_::t) -> t
---     _ -> Debug.todo "error"
---
--- transpose : List (List a) -> List (List a)
--- transpose ls =
---   case ls of
---     ([]::_) -> []
---     _ -> (List.map myHead ls) :: transpose (List.map myTail ls)
-
 -- find elem at index i
 indexList : Index -> List a -> a
 indexList i ls =
@@ -89,10 +71,18 @@ update msg model =
   case msg of
     Keystroke dir ->
       case dir of
-        Left  -> update Tick model
-        Right -> update Tick model
-        Up    -> update Tick model
-        Down  -> update Tick model
+        Left  ->
+          let newBoard = left model.board
+          in update Tick {board = newBoard}
+        Right ->
+          let newBoard = right model.board
+          in update Tick {board = newBoard}
+        Up    ->
+          let newBoard = up model.board
+          in update Tick {board = newBoard}
+        Down  ->
+          let newBoard = down model.board
+          in update Tick {board = newBoard}
         Other -> (model, Cmd.none)
     Tick ->
       let empties = findEmpties model.board
@@ -130,7 +120,7 @@ view model =
   let
     rowViews = List.map viewRow model.board
   in
-     Html.div [Html.Attributes.class "Container"] 
+     Html.div [Html.Attributes.class "Container"]
       [ Html.div [Html.Attributes.class "Board"] rowViews ]
 
 viewRow : List Num -> Html Msg
@@ -141,12 +131,7 @@ viewRow row =
       Html.div [Html.Attributes.class "Row"] rowView
 
 viewCell : Num -> Html Msg
-viewCell num = Html.div [Html.Attributes.class "Cell"] [Html.text (String.fromInt num)]
-
-
---renderList lst =
---  Html.ul []
---    (List.map (\l -> Html.li [] [ Html.text (String.fromInt l)]) lst)
+viewCell num = Html.div [Html.Attributes.class ("Cell Cell" ++ Debug.toString num)] [Html.text (String.fromInt num)]
 
 -----------------------------------------------------
 -- Other Helpers
@@ -203,7 +188,7 @@ combine : List Num -> List Num
 combine row =
   case row of
     [] -> []
-    (x::y::rest) -> if x==y then (2*x) :: combine rest else (x::y::(combine rest))
+    (x::y::rest) -> if x==y then (2*x) :: combine rest else x::(combine (y::rest))
     (x::rest) -> x :: combine rest
 
 reflect ls = List.map List.reverse ls
