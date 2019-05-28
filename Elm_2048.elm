@@ -2,7 +2,8 @@ module Elm_2048 exposing (..)
 
 import Browser
 import Browser.Events
-import Html exposing (Html)
+import Html exposing (..)
+import Html.Attributes exposing (..)
 import Random exposing (Generator)
 import Time
 import Debug
@@ -129,14 +130,15 @@ view model =
   let
     rowViews = List.map viewRow model.board
   in
-     Html.div [] [ Html.div [] rowViews ]
+     Html.div [Html.Attributes.class "Container"] 
+      [ Html.div [Html.Attributes.class "Board"] rowViews ]
 
 viewRow : List Num -> Html Msg
 viewRow row = 
   let
     rowView = List.map viewCell row 
   in
-      Html.div [] rowView
+      Html.div [Html.Attributes.class "Row"] rowView
 
 viewCell : Num -> Html Msg
 viewCell num = Html.div [] [Html.text (String.fromInt num)]
