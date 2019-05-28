@@ -141,7 +141,7 @@ viewRow row =
       Html.div [Html.Attributes.class "Row"] rowView
 
 viewCell : Num -> Html Msg
-viewCell num = Html.div [] [Html.text (String.fromInt num)]
+viewCell num = Html.div [Html.Attributes.class "Cell"] [Html.text (String.fromInt num)]
 
 
 --renderList lst =
