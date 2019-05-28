@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Elm_2048</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -6259,31 +6260,32 @@ var author$project$Elm_2048$update = F2(
 			}
 		}
 	});
-var elm$html$Html$li = _VirtualDom_node('li');
+var elm$html$Html$div = _VirtualDom_node('div');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
-var elm$html$Html$ul = _VirtualDom_node('ul');
-var author$project$Elm_2048$renderList = function (lst) {
+var author$project$Elm_2048$viewCell = function (num) {
 	return A2(
-		elm$html$Html$ul,
+		elm$html$Html$div,
 		_List_Nil,
-		A2(
-			elm$core$List$map,
-			function (l) {
-				return A2(
-					elm$html$Html$li,
-					_List_Nil,
-					_List_fromArray(
-						[
-							elm$html$Html$text(
-							elm$core$String$fromInt(l))
-						]));
-			},
-			lst));
+		_List_fromArray(
+			[
+				elm$html$Html$text(
+				elm$core$String$fromInt(num))
+			]));
+};
+var author$project$Elm_2048$viewRow = function (row) {
+	var rowView = A2(elm$core$List$map, author$project$Elm_2048$viewCell, row);
+	return A2(elm$html$Html$div, _List_Nil, rowView);
 };
 var author$project$Elm_2048$view = function (model) {
-	return author$project$Elm_2048$renderList(
-		author$project$Elm_2048$flatten(model.board));
+	var rowViews = A2(elm$core$List$map, author$project$Elm_2048$viewRow, model.board);
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(elm$html$Html$div, _List_Nil, rowViews)
+			]));
 };
 var elm$browser$Browser$element = _Browser_element;
 var author$project$Elm_2048$main = elm$browser$Browser$element(

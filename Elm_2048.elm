@@ -125,7 +125,26 @@ subscriptions model =
    -- Browser.Events.onKeyDown (Decode.map (\key -> Tick) keyDecoder)
 
 view : Model -> Html Msg
-view model = renderList (flatten model.board)
+view model = 
+  let
+    rowViews = List.map viewRow model.board
+  in
+     Html.div [] [ Html.div [] rowViews ]
+
+viewRow : List Num -> Html Msg
+viewRow row = 
+  let
+    rowView = List.map viewCell row 
+  in
+      Html.div [] rowView
+
+viewCell : Num -> Html Msg
+viewCell num = Html.div [] [Html.text (String.fromInt num)]
+
+
+--renderList lst =
+--  Html.ul []
+--    (List.map (\l -> Html.li [] [ Html.text (String.fromInt l)]) lst)
 
 -----------------------------------------------------
 -- Other Helpers
@@ -178,9 +197,7 @@ flatten board = List.concat board
 unFlatten : List Num -> Grid
 unFlatten flatBoard = List.Extra.groupsOf 4 flatBoard
 
-renderList lst =
-  Html.ul []
-    (List.map (\l -> Html.li [] [ Html.text (String.fromInt l)]) lst)
+
 
 -- combine : List Num -> List Num
 -- combine row =
