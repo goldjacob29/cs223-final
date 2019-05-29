@@ -144,7 +144,7 @@ viewRow row =
       Html.div [Html.Attributes.class "Row"] rowView
 
 viewCell : Num -> Html Msg
-viewCell num = Html.div [Html.Attributes.class ("Cell Cell" ++ Debug.toString num)] [Html.text (String.fromInt num)]
+viewCell num = Html.div [Html.Attributes.class ("Cell TileNum" ++ Debug.toString num)] [Html.text (String.fromInt num)]
 
 -----------------------------------------------------
 -- Other Helpers
