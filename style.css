@@ -3,6 +3,18 @@ body {
   font-family: "Helvetica"
 }
 
+.title {
+  width: 600px;
+  font-size: 80px;
+  text-align: center;
+}
+
+.subtitle {
+  width: 600px;
+  font-size: 50px;
+  text-align: center;
+}
+
 .Row {
   display: flex;
 }
@@ -43,13 +55,11 @@ body {
 .TileNum2 {
   color: #776E65;
   background-color: #EEE4DA;
-  /*box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0), inset 0 0 0 1px rgba(255, 255, 255, 0); */
 }
 
 .TileNum4 {
   color: #776E65;
   background-color: #EDE0C8;
-  /*box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0), inset 0 0 0 1px rgba(255, 255, 255, 0); */
 }
 
 .TileNum8 {
@@ -80,13 +90,8 @@ body {
 
 .TileNum256 {
   color: #F9F6F2;
-<<<<<<< HEAD
-  background-color: #EDCC61;
-  /*box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.31746), inset 0 0 0 1px rgba(255, 255, 255, 0.19048);*/
-=======
   background-color: #EDCC61;
   box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.31746), inset 0 0 0 1px rgba(255, 255, 255, 0.19048);
->>>>>>> a51c5d4f7efd8f70f96c8f22c6cb6b27850b3fa4
 }
 
 .TileNum512 {
@@ -98,12 +103,7 @@ body {
 .TileNum1024 {
   color: #f9f6f2;
   background: #edc53f;
-<<<<<<< HEAD
-  /*box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.47619), inset 0 0 0 1px rgba(255, 255, 255, 0.28571);*/
-/*}*/
-=======
   box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.47619), inset 0 0 0 1px rgba(255, 255, 255, 0.28571);
->>>>>>> a51c5d4f7efd8f70f96c8f22c6cb6b27850b3fa4
 }
 
 .TileNum2048 {

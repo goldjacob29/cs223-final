@@ -12,25 +12,6 @@ import Array
 import Json.Decode as Decode
 import List.Extra
 
-
--- import Time
-
------------------------------------------------------
-genTwoOrFour seed = Random.step (Random.weighted (75, 2) [(25,4)]) seed
-
-
-oldIndexList i ls =
-  case (i, ls) of
-    (_, []) -> Debug.todo "error"
-    (0, l::_) -> l
-    (_,_::rest) -> oldIndexList (i-1) rest
-
-pickEmptySquare : List Loc -> Random.Seed -> (Loc, Random.Seed)
-pickEmptySquare locs seed =
-  let n = List.length locs
-      (index, newSeed) = Random.step (Random.int 0 (n-1)) seed
-  in (oldIndexList index locs, newSeed)
-
 -----------------------------------------------------
 -- Types and Aliases
 -----------------------------------------------------
@@ -40,7 +21,7 @@ type alias Grid = List (List Num)
 type alias Model =
   { board : Grid }
 
-type Meta = NewGame | StartGame | OtherMeta
+type Meta = NewGame | OtherMeta
 
 type Direction = Left | Right | Up | Down | OtherDir
 
@@ -56,6 +37,24 @@ type alias Num = Int
 type alias Index = Int
 
 type alias Flags = Int
+-----------------------------------------------------
+-- For initial State
+-----------------------------------------------------
+genTwoOrFour seed = Random.step (Random.weighted (75, 2) [(25,4)]) seed
+
+oldIndexList i ls =
+  case (i, ls) of
+    (_, []) -> Debug.todo "error"
+    (0, l::_) -> l
+    (_,_::rest) -> oldIndexList (i-1) rest
+
+pickEmptySquare : List Loc -> Random.Seed -> (Loc, Random.Seed)
+pickEmptySquare locs seed =
+  let n = List.length locs
+      (index, newSeed) = Random.step (Random.int 0 (n-1)) seed
+  in (oldIndexList index locs, newSeed)
+-----------------------------------------------------
+-- Logging
 -----------------------------------------------------
 log : String -> a -> a
 log s x =
@@ -73,6 +72,44 @@ indexList i ls =
     (_, [])      -> -1
     (0, l::_)    -> l
     (_, _::rest) -> indexList (i-1) rest
+
+
+flatten : Grid -> List Num
+flatten board = List.concat board
+
+unFlatten : List Num -> Grid
+unFlatten flatBoard = List.Extra.groupsOf 4 flatBoard
+
+combine : List Num -> List Num
+combine row =
+  case row of
+    [] -> []
+    (x::y::rest) -> if x==y then (2*x) :: combine rest else x::(combine (y::rest))
+    (x::rest) -> x :: combine rest
+
+reflect : Grid -> Grid
+reflect ls = List.map List.reverse ls
+
+shift : List Num -> List Num
+shift ls =
+  let nonzero = List.filter (\x -> x > 0) ls
+      combined = combine nonzero
+      numZeroes = 4 - List.length combined
+      zeroes = List.repeat numZeroes 0
+  in combined ++ zeroes
+
+left : Grid -> Grid
+left ls = List.map shift ls
+
+right : Grid -> Grid
+right ls = (reflect << left << reflect) ls
+
+up : Grid -> Grid
+up ls = (List.Extra.transpose << left << List.Extra.transpose) ls
+
+down : Grid -> Grid
+down ls = (List.Extra.transpose << right << List.Extra.transpose) ls
+
 
 -----------------------------------------------------
 -- MVC Functions
@@ -104,9 +141,13 @@ initModel currentTime =
       (num2, seed3) = genTwoOrFour seed2
       (loc2, seed4) = pickEmptySquare (List.map indexToLoc empties) seed3
       board2 = placeVal loc2 num2 board1
-
   in {board=board2}
 
+getSeed : List Num -> Index -> Int -> Int
+getSeed boardList index counter =
+  case boardList of
+    [] -> counter
+    (x::xs) -> getSeed xs (index+1) (counter + x * (index * 7))
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -114,34 +155,30 @@ update msg model =
     Button meta ->
       case (meta) of
         NewGame ->
-          let (iModel, _) = init 10
-          in update (Button StartGame) iModel
-        StartGame ->
-          let (onePiece, cmd1) =  update Tick model
-              (twoPiece, cmd2) =  update Tick onePiece
-          in (twoPiece, Cmd.batch [cmd1, cmd2])
+          let seed = getSeed (flatten model.board) 0 0
+          in init seed
         OtherMeta -> (model, Cmd.none)
     Keystroke dir ->
       case (log "dir" dir) of
         Left  ->
           if canMoveLeft model.board then
             let newBoard = left model.board
-            in update Tick {board = newBoard}
+            in update Tick {model | board = newBoard}
           else (model, Cmd.none)
         Right ->
           if canMoveRight model.board then
             let newBoard = right model.board
-            in update Tick {board = newBoard}
+            in update Tick {model | board = newBoard}
           else (model, Cmd.none)
         Up    ->
           if canMoveUp model.board then
             let newBoard = up model.board
-            in update Tick {board = newBoard}
+            in update Tick {model | board = newBoard}
           else (model, Cmd.none)
         Down  ->
           if canMoveDown model.board then
             let newBoard = down model.board
-            in update Tick {board = newBoard}
+            in update Tick {model | board = newBoard}
           else (model, Cmd.none)
         OtherDir -> (model, Cmd.none)
     Tick ->
@@ -152,7 +189,7 @@ update msg model =
           elem = indexList index empties
           loc = indexToLoc (indexList index empties)
           newBoard = placeVal loc num model.board
-          newModel = {board=newBoard}
+          newModel = {model | board = newBoard}
           isMove = log "move" (movesExist newBoard)
       in
           if not isMove then
@@ -204,7 +241,6 @@ toMeta : String -> Meta
 toMeta string =
   case string of
     "n" -> NewGame
-    " " -> StartGame
     _ -> OtherMeta
 
 subscriptions : Model -> Sub Msg
@@ -218,9 +254,15 @@ view : Model -> Html Msg
 view model =
   let
     rowViews = List.map viewRow model.board
+    titleText = Html.text ("2048")
+    subtitleText = Html.text ("by Alex & Jacob")
   in
      Html.div [Html.Attributes.class "Container"]
-      [ Html.div [Html.Attributes.class "Board"] rowViews ]
+      [
+      Html.div [Html.Attributes.class "title"] [titleText],
+      Html.div [Html.Attributes.class "subtitle"] [subtitleText],
+      Html.div [Html.Attributes.class "Board"] rowViews
+      ]
 
 viewRow : List Num -> Html Msg
 viewRow row =
@@ -276,30 +318,3 @@ placeVal : Loc -> Num -> Grid -> Grid
 placeVal loc num board =
   let flatInserted = List.Extra.setAt (locToIndex loc) num (flatten board)
   in unFlatten flatInserted
-
-flatten : Grid -> List Num
-flatten board = List.concat board
-
-unFlatten : List Num -> Grid
-unFlatten flatBoard = List.Extra.groupsOf 4 flatBoard
-
-combine : List Num -> List Num
-combine row =
-  case row of
-    [] -> []
-    (x::y::rest) -> if x==y then (2*x) :: combine rest else x::(combine (y::rest))
-    (x::rest) -> x :: combine rest
-
-reflect ls = List.map List.reverse ls
-
-shift ls =
-  let nonzero = List.filter (\x -> x > 0) ls
-      combined = combine nonzero
-      numZeroes = 4 - List.length combined
-      zeroes = List.repeat numZeroes 0
-  in combined ++ zeroes
-
-left ls  = List.map shift ls
-right ls = (reflect << left << reflect) ls
-up ls    = (List.Extra.transpose << left << List.Extra.transpose) ls
-down ls  = (List.Extra.transpose << right << List.Extra.transpose) ls
