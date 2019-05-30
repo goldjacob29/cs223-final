@@ -12,6 +12,43 @@ import Array
 import Json.Decode as Decode
 import List.Extra
 
+
+-- import Time
+
+-----------------------------------------------------
+genTwoOrFour seed = Random.step (Random.weighted (75, 2) [(25,4)]) seed
+
+
+oldIndexList i ls =
+  case (i, ls) of
+    (_, []) -> Debug.todo "error"
+    (0, l::_) -> l
+    (_,_::rest) -> oldIndexList (i-1) rest
+
+pickEmptySquare : List Loc -> Random.Seed -> (Loc, Random.Seed)
+pickEmptySquare locs seed =
+  let n = List.length locs
+      (index, newSeed) = Random.step (Random.int 0 (n-1)) seed
+  in (oldIndexList index locs, newSeed)
+
+
+initModel : Model
+initModel =
+
+  let seed = Time.now |> Task.Perform NoOp CurrentTime |> round |> Random.initialSeed
+      board = emptyBoard
+      empties = findEmpties board
+      (num1, seed1) = genTwoOrFour seed
+      (loc1, seed2) = pickEmptySquare (List.map indexToLoc empties) seed1
+      board1 = placeVal loc1 num1 board
+
+      empties1 = findEmpties board1
+      (num2, seed3) = genTwoOrFour seed2
+      (loc2, seed4) = pickEmptySquare (List.map indexToLoc empties) seed3
+      board2 = placeVal loc2 num2 board1
+
+  in {board=board2}
+
 -----------------------------------------------------
 -- Types and Aliases
 -----------------------------------------------------
@@ -21,9 +58,11 @@ type alias Grid = List (List Num)
 type alias Model =
   { board : Grid }
 
-type Direction = Left | Right | Up | Down | Other | NewGame
+type Meta = NewGame | StartGame | OtherMeta
 
-type Msg = Tick | RandomPlay Play | Keystroke Direction | Gameover
+type Direction = Left | Right | Up | Down | OtherDir
+
+type Msg = Tick | RandomPlay Play | Keystroke Direction | Gameover | Button Meta
 
 type alias Play =
   {index : Index, num : Num}
@@ -41,8 +80,6 @@ log s x =
   let stringX = Debug.toString x
   in case (Debug.log s stringX) of
     _ -> x
-
-
 -----------------------------------------------------
 -- List Helper Functions
 -----------------------------------------------------
@@ -71,17 +108,22 @@ main =
 init : Flags -> (Model, Cmd Msg)
 init () = (initModel, Cmd.none)
 
-initModel : Model
-initModel = {board=emptyBoard}
-  -- let model = {board=emptyBoard}
-  --     (onePiece, _) = update Tick model
-  --     -- (twoPiece, _) = update Tick onePiece
-  -- in
-  --     onePiece
+-- initModel : Model
+-- initModel =
+--   let board = emptyBoard
+
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+    Button meta ->
+      case (meta) of
+        NewGame -> update (Button StartGame) initModel
+        StartGame ->
+          let (onePiece, cmd1) =  update Tick model
+              (twoPiece, cmd2) =  update Tick onePiece
+          in (twoPiece, Cmd.batch [cmd1, cmd2])
+        OtherMeta -> (model, Cmd.none)
     Keystroke dir ->
       case (log "dir" dir) of
         Left  ->
@@ -104,11 +146,7 @@ update msg model =
             let newBoard = down model.board
             in update Tick {board = newBoard}
           else (model, Cmd.none)
-        NewGame ->
-          let (onePiece, cmd1) =  update Tick model
-              (twoPiece, cmd2) =  update Tick onePiece
-          in (twoPiece, Cmd.batch [cmd1, cmd2])
-        Other -> (model, Cmd.none)
+        OtherDir -> (model, Cmd.none)
     Tick ->
       let empties = findEmpties model.board
       in (model, Random.generate RandomPlay (playGenerator empties))
@@ -124,7 +162,7 @@ update msg model =
             update Gameover newModel
           else
             (newModel, Cmd.none)
-    Gameover -> update (Keystroke NewGame) initModel
+    Gameover -> update (Button NewGame) model
 
 
 canMoveLeft : Grid -> Bool
@@ -158,15 +196,26 @@ toDirection string =
     "ArrowRight" -> Right
     "ArrowUp" -> Up
     "ArrowDown" ->  Down
-    " " -> NewGame --dumb shit
-    _ -> Other
+    _ -> OtherDir
+
+metaDecoder : Decode.Decoder Meta
+metaDecoder =
+  Decode.map toMeta (Decode.field "key" Decode.string)
+
+
+toMeta : String -> Meta
+toMeta string =
+  case string of
+    "n" -> NewGame
+    " " -> StartGame
+    _ -> OtherMeta
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
-        [ Browser.Events.onKeyDown (Decode.map Keystroke keyDecoder)
+        [ Browser.Events.onKeyDown (Decode.map Keystroke keyDecoder),
+          Browser.Events.onKeyDown (Decode.map Button metaDecoder)
         ]
-   -- Browser.Events.onKeyDown (Decode.map (\key -> Tick) keyDecoder)
 
 view : Model -> Html Msg
 view model =
