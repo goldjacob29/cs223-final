@@ -31,24 +31,6 @@ pickEmptySquare locs seed =
       (index, newSeed) = Random.step (Random.int 0 (n-1)) seed
   in (oldIndexList index locs, newSeed)
 
-
-initModel : Model
-initModel =
-
-  let seed = Time.now |> Task.Perform NoOp CurrentTime |> round |> Random.initialSeed
-      board = emptyBoard
-      empties = findEmpties board
-      (num1, seed1) = genTwoOrFour seed
-      (loc1, seed2) = pickEmptySquare (List.map indexToLoc empties) seed1
-      board1 = placeVal loc1 num1 board
-
-      empties1 = findEmpties board1
-      (num2, seed3) = genTwoOrFour seed2
-      (loc2, seed4) = pickEmptySquare (List.map indexToLoc empties) seed3
-      board2 = placeVal loc2 num2 board1
-
-  in {board=board2}
-
 -----------------------------------------------------
 -- Types and Aliases
 -----------------------------------------------------
@@ -73,7 +55,7 @@ type alias Loc = { row:Int, col:Int }
 type alias Num = Int
 type alias Index = Int
 
-type alias Flags = ()
+type alias Flags = Int
 -----------------------------------------------------
 log : String -> a -> a
 log s x =
@@ -106,11 +88,24 @@ main =
     }
 
 init : Flags -> (Model, Cmd Msg)
-init () = (initModel, Cmd.none)
+init currentTime = (initModel currentTime, Cmd.none)
 
--- initModel : Model
--- initModel =
---   let board = emptyBoard
+initModel : Flags -> Model
+initModel currentTime =
+
+  let seed = Random.initialSeed currentTime
+      board = emptyBoard
+      empties = findEmpties board
+      (num1, seed1) = genTwoOrFour seed
+      (loc1, seed2) = pickEmptySquare (List.map indexToLoc empties) seed1
+      board1 = placeVal loc1 num1 board
+
+      empties1 = findEmpties board1
+      (num2, seed3) = genTwoOrFour seed2
+      (loc2, seed4) = pickEmptySquare (List.map indexToLoc empties) seed3
+      board2 = placeVal loc2 num2 board1
+
+  in {board=board2}
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -118,7 +113,9 @@ update msg model =
   case msg of
     Button meta ->
       case (meta) of
-        NewGame -> update (Button StartGame) initModel
+        NewGame ->
+          let (iModel, _) = init 10
+          in update (Button StartGame) iModel
         StartGame ->
           let (onePiece, cmd1) =  update Tick model
               (twoPiece, cmd2) =  update Tick onePiece
