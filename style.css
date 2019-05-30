@@ -7,7 +7,7 @@ body {
   display: flex;
 }
 
-.Container { 
+.Container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -80,7 +80,7 @@ body {
 
 .TileNum256 {
   color: #F9F6F2;
-  background-color: #EDCC61; 
+  background-color: #EDCC61;
   /*box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.31746), inset 0 0 0 1px rgba(255, 255, 255, 0.19048);*/
 }
 
@@ -95,6 +95,7 @@ body {
   background: #edc53f;
   /*box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.47619), inset 0 0 0 1px rgba(255, 255, 255, 0.28571);*/
 /*}*/
+}
 
 .TileNum2048 {
   color: #f9f6f2;
