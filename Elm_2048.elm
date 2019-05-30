@@ -3,6 +3,7 @@ module Elm_2048 exposing (..)
 import Browser
 import Browser.Events
 import Html exposing (..)
+import Html.Events
 import Html.Attributes exposing (..)
 import Random exposing (Generator)
 import Time
@@ -261,6 +262,7 @@ view model =
       [
       Html.div [Html.Attributes.class "title"] [titleText],
       Html.div [Html.Attributes.class "subtitle"] [subtitleText],
+      Html.div [Html.Attributes.class "newgame-button"] [Html.button [Html.Events.onClick (Button NewGame)] [text "New Game"]],
       Html.div [Html.Attributes.class "Board"] rowViews
       ]
 
