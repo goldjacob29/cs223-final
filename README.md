@@ -14,3 +14,4 @@ start game with pieces on board
 scoreboard
 newgame (at any time)
 gameOver screen (including newgame)
+ 
