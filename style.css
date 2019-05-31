@@ -1,3 +1,6 @@
+/*CSS elp from Gabriele Cirulli's original implementation of 2048: 
+https://github.com/gabrielecirulli/2048/blob/master/style/helpers.scss */
+
 body {
   background-color: #FAF8EF;
   font-family: "Helvetica"
@@ -19,15 +22,6 @@ body {
   text-align: center;
   color: #BBADA0;
   font-size: 15px;
-}
-
-.newgame-button {
-/*  border: none;
-  color: white;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;*/
 }
 
 .Row {
