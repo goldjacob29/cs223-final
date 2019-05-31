@@ -1,53 +1,110 @@
 What we accomplished:
 
--For our final project, we built the 2048 game using Elm. While originally 
-developed in JavaScript, we rebuilt the game from scratch in a functional 
-paradigm. While aspects of the game such as the board and the allowed moves
-are rather straightforward, it required some additional work to change our 
-thinking around from the programming languages we had been using for so long. 
+For our final project, we built the 2048 game using Elm. While originally
+developed in JavaScript, we rebuilt the game from scratch in a functional
+style. While the game itself is rather straightforward to play, we found
+several interesting problems arose as we worked through our implementation.
+Overall we had a lot of fun working through this project (and working with
+Elm specifically!), and found it to be a great exercise for understanding
+the MVC framework in Elm, as well as programming functionally in general.
 
-Difficulties:
+Model & the Evolution of the Board:
 
--A first major difficulty we encountered was how we should represent our board. 
-After originally messing around with a couple of matrix packages, we ultimately
-realized we would need access to the individual rows when shifting, and thus
-decided to compose it instead of a List of Lists of Ints. To aid in this process
-we defined a couple of type aliases to help us keep track of the value of a tile 
-(Num) and the tile's position relative to the entire list of tiles (Index)
+The very first thing we did was try to figure out what data structure to use
+to represent our board. Initially we tried out several Matrix libraries, but
+ended up using a simple List (List Num) (Note Num is a type alias for Int used
+to represent values on the board). We wanted to use a Matrix library so that
+we could make use of getters and setters, as well as some Matrix operations such
+as transpose (more on this later), but realized that writing this functionality
+from scratch is not too hard, and that we would actually need to access the underlying
+lists directly (again more on this later).
 
--Another major difficulty we encountered was the random generation of tiles after
-every move. Not only did we need to randomly place a tile on an open square, but 
-we needed to specifically place either a 2 or a 4 based on a weighting function. 
-After spending some time trying to accomplish this using random seeds, we realized
-that by creating a type alias Play that contains both an Index and a Num, we could
-combine all of our work into a single random generator. 
+For most of the development of the project, our model consisted solely of the board.
+Once we had the game working as intended, we added support for score as well as
+undo. Although undo is not supported by the official game, we thought it would be
+a fun feature to add. Thus our model became
+type alias Model = { board : Grid, score : Score, history : List (Grid, Score) }
+where the history contains all previous boards and scores (ie not including the
+current state).
 
--When it came to the actual game logic itself, once we realized that the shifts
-were simply matrix transitions, we were able to define all four directions in terms
-of just a "Left" move. This greatly simplified our logic and required us only to 
-create a `combine` and `shift` function to handle row-level actions. 
+Randomness
 
--Along the way we encountered a few other minor challenges such as ensuring exactly
-two pieces start on the board (that get uniquely and randomly placed every time)
-and preventing new tile generation on a move that does not change the board. These
-were minor tweaks given the way we had set up our model.  
+Throughout this project, our biggest difficulty came with randomness. Randomness
+appears in multiple spots in the game including the generation of the starting board,
+as well as the adding of a 2 or 4 after each individual move. The latter case was
+quite easy for us to do following the Tick/RandomPoint routine from the Pi homework
+(with slight modification). We had a lot of trouble, however, we the initial state.
+We ended up using the flags variable to send in Date.now() from JavaScript, and use
+this as a pseudo-seed for our initial board state. Of course we realize that a lot
+of the difficulty we encountered is due to randomness being an impure function
+(and it is like that for a reason!), and that this method serves to bypass that.
+Maybe this is good and maybe not, but it was cool to see how flags (other than ())
+could actually be used in our program.
 
--A last major challenge we needed to solve in order to complete this project was 
-through the use of JavaScript Interop, where we used both flags and ports to send
-some data between our HTML and Elm files. We used a flag to get the time as it 
-is used in our initial random seed and we used a port to display a final gameover
-popup message that was proving extremely difficult to do in Elm alone. 
+Main Game Logic
+
+I mentioned earlier that we wanted to make use of Matrix operations such as the
+transpose. We realized relatively early on that we could write the shifting
+operations in terms of one another, making use of modifications to the board
+(transpose, reflect). This is probably the most elegant part of the entire program.
+Essentially, we first wrote our left-shift function for a single row (which shifted
+and combined like tiles). From there we could write the full (entire board) left
+by mapping the row shift. Then right is simply (reflect << left << reflect),
+while up and down make use of transpose instead of reflect.
+
+Originally we tried to include scoring in the combine functions, but found this
+to be incredibly difficult. Then we realized that we could write separate functions,
+that use basically the same recursion, but return scores (ints) instead. Then we would
+simply call both functions (shifting and scoring from shifting), and update the model
+accordingly.
+
+Some Other Aspects
+
+I wanted to take the time here to talk a little about how we implemented the
+actual gameplay. We used JSON decoders in order to recognize key presses, and
+sent messages of the form Keystroke Direction in order to indicate which way
+the board should be shifted. Implementing this alone was not too difficult, but
+it did uncover some issues with our logic that we had to go and patch up.
+
+One example came with the random generation of a 2 or 4 after every move. Originally
+we sent a 'Tick' after every key press. We realized, however, that we only want
+to do the random generation when the shift actually goes through. Thus we needed
+to check if the move could actually be made, and only generate a new tile when
+the move is made. This game up again in signaling the end of the game. We decided to,
+after randomly placing a tile, determine if there are any more moves. If yes, keep
+going. If no, end the game.
+
+We decided to use the JavaScript Interop one more time in order to create a
+popup when there are no more moves. This wasn't too bad to do: we defined two
+ports to signal the popup to appear, and another for the closing of the popup.
+The main issue, however, came with the popup we tried to use. Originally we wanted
+to use window.alert(), however, this function (in JavaScript) has an undefined return
+type. Elm needs to know the type of the data coming through the port, and since
+no type would match this return, it would not work. We ended up swapping alert()
+for confirm() since it returns a Bool, and simply ignoring the value of Bool.
 
 Thoughts on Elm:
 
-After building this game in Elm we both realized that we are big fans of this 
-progamming language. We specifically enjoyed learning more about the JavaScript
-Interop to see all the additional features we could implement by using flags and
-ports. While we wished debugging was a little simpler, the Debug.log method
-helped us by printing certain values to the console in Chrome, while the 
-compiler in terminal constantly helped us ensure all of our functions were 
-correctly annotated with the right types. We both agreed that Elm has the best 
-and most helpful error messages of any language we've ever seen.  
+We both had a lot of fun working through this project and with Elm specifically.
+We found that there were several constructions (especially with the main game logic)
+that turned out so beautifully in the functional style. Writing the shifting functions
+(using composition) and the scoring functions (using fold) just felt right, and
+produced some really elegant code.
 
+Elm is really cool in particular with how it can be compiled to JavaScript.
+We really enjoyed learning about how to use flags and ports, as well as how
+we could use CSS to modify HTML elements created in Elm.
 
+We had some issues throughout caused by difficulty in debugging. Programming and
+checking things on the type level is great and catches a lot of issues early on.
+That is, when our program compiles we feel a lot more confident in it than we would
+with many other languages. We also both agreed that Elm has the best and most helpful
+error messages we have ever seen. It becomes tricky, however, working with impure functions
+(such as randomness), and certain parts of the game where the logic cannot be checked
+with types alone.
 
+I wanted to give a special shoutout to a logging function that we wrote (and
+wished we had written sooner!). This function takes in any argument, turns it
+into a string, logs it, and returns the original value. This meant that we could
+substitute (log x) for (x) anywhere in the program, allowing us to see the value
+of x printed to the console. This was a huge breakthrough in debugging.
