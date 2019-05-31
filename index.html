@@ -28,7 +28,7 @@ Author: Alex Markowitz & Jacob Gold
 		});
 
     app.ports.gameoverPopup.subscribe(function() {
-      app.ports.closePopup.send(window.alert("Game Over! Click OK then New Game to play again :)"))
+      app.ports.closePopup.send(window.confirm("Game Over! Click New Game to play again :)"))
     });
 
   </script>
