@@ -9,8 +9,5 @@ run `elm make Elm_2048.elm --output script.js` to compile, then open the index.h
 
 TODO:
 
-movesExist
-start game with pieces on board
 scoreboard
-newgame (at any time)
 gameOver screen (including newgame)
