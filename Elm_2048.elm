@@ -14,7 +14,7 @@ import Json.Decode as Decode
 import List.Extra
 
 port gameoverPopup : () -> Cmd msg
-port closePopup : (()->msg) -> Sub msg
+port closePopup : (Bool->msg) -> Sub msg
 
 -----------------------------------------------------
 -- Types and Aliases
@@ -142,7 +142,6 @@ scoreHorizontal score ls =
 scoreVertical : Score -> Grid -> Score
 scoreVertical score ls = scoreHorizontal score (List.Extra.transpose ls)
 
-
 combine : List Num -> List Num
 combine row =
   case row of
@@ -193,8 +192,6 @@ movesExist g =
   else if canMoveDown g then True
   else False
 
-
-
 -----------------------------------------------------
 -- MVC Functions
 -----------------------------------------------------
@@ -241,7 +238,7 @@ update msg model =
             (b,s)::rest -> ({model | board = b, score=s, history = rest}, Cmd.none)
         OtherMeta -> (model, Cmd.none)
     Keystroke dir ->
-      case (log "dir" dir) of
+      case (log "Direction:" dir) of
         Left  ->
           if canMoveLeft model.board then
             let newBoard = left model.board
@@ -279,7 +276,7 @@ update msg model =
           loc = indexToLoc (indexList index empties)
           newBoard = placeVal loc num model.board
           newModel = {model | board = newBoard}
-          isMove = log "move" (movesExist newBoard)
+          isMove = log "Move:" (movesExist newBoard)
       in
           if not isMove then
             update Gameover newModel
@@ -292,7 +289,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
         [ Browser.Events.onKeyDown (Decode.map Keystroke keyDecoder),
-        closePopup (\x -> ClosePopup)]
+        closePopup (\b -> ClosePopup)]
 
 view : Model -> Html Msg
 view model =
