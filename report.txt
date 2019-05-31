@@ -1,0 +1,53 @@
+What we accomplished:
+
+-For our final project, we built the 2048 game using Elm. While originally 
+developed in JavaScript, we rebuilt the game from scratch in a functional 
+paradigm. While aspects of the game such as the board and the allowed moves
+are rather straightforward, it required some additional work to change our 
+thinking around from the programming languages we had been using for so long. 
+
+Difficulties:
+
+-A first major difficulty we encountered was how we should represent our board. 
+After originally messing around with a couple of matrix packages, we ultimately
+realized we would need access to the individual rows when shifting, and thus
+decided to compose it instead of a List of Lists of Ints. To aid in this process
+we defined a couple of type aliases to help us keep track of the value of a tile 
+(Num) and the tile's position relative to the entire list of tiles (Index)
+
+-Another major difficulty we encountered was the random generation of tiles after
+every move. Not only did we need to randomly place a tile on an open square, but 
+we needed to specifically place either a 2 or a 4 based on a weighting function. 
+After spending some time trying to accomplish this using random seeds, we realized
+that by creating a type alias Play that contains both an Index and a Num, we could
+combine all of our work into a single random generator. 
+
+-When it came to the actual game logic itself, once we realized that the shifts
+were simply matrix transitions, we were able to define all four directions in terms
+of just a "Left" move. This greatly simplified our logic and required us only to 
+create a `combine` and `shift` function to handle row-level actions. 
+
+-Along the way we encountered a few other minor challenges such as ensuring exactly
+two pieces start on the board (that get uniquely and randomly placed every time)
+and preventing new tile generation on a move that does not change the board. These
+were minor tweaks given the way we had set up our model.  
+
+-A last major challenge we needed to solve in order to complete this project was 
+through the use of JavaScript Interop, where we used both flags and ports to send
+some data between our HTML and Elm files. We used a flag to get the time as it 
+is used in our initial random seed and we used a port to display a final gameover
+popup message that was proving extremely difficult to do in Elm alone. 
+
+Thoughts on Elm:
+
+After building this game in Elm we both realized that we are big fans of this 
+progamming language. We specifically enjoyed learning more about the JavaScript
+Interop to see all the additional features we could implement by using flags and
+ports. While we wished debugging was a little simpler, the Debug.log method
+helped us by printing certain values to the console in Chrome, while the 
+compiler in terminal constantly helped us ensure all of our functions were 
+correctly annotated with the right types. We both agreed that Elm has the best 
+and most helpful error messages of any language we've ever seen.  
+
+
+

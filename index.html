@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<!--Info: 2048 in Elm
+<!--
+Info: 2048 in Elm
 Date: May 2019
 Version: 1.0
 Author: Alex Markowitz & Jacob Gold
-Contact: @uchicago.edu -->
+-->
 <html>
 <head>
 	<html lang="en-US">
@@ -21,10 +22,14 @@ Contact: @uchicago.edu -->
   <script src="script.js"></script>
 
   <script>
-    Elm.Elm_2048.init({
+    var app = Elm.Elm_2048.init({
 			node: document.getElementById("elm-code-is-loaded-here"),
 			flags: Date.now()
 		});
+
+    app.ports.gameoverPopup.subscribe(function() {
+      app.ports.closePopup.send(window.alert("Game Over! Click OK then New Game to play again :)"))
+    });
 
   </script>
 

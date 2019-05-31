@@ -1,3 +1,6 @@
+/*CSS elp from Gabriele Cirulli's original implementation of 2048: 
+https://github.com/gabrielecirulli/2048/blob/master/style/helpers.scss */
+
 body {
   background-color: #FAF8EF;
   font-family: "Helvetica"
@@ -7,12 +10,18 @@ body {
   width: 600px;
   font-size: 80px;
   text-align: center;
+  color: #BBADA0;
+  font-weight: bold;
+  font-size: 30px;
 }
 
 .subtitle {
   width: 600px;
+  padding-top: -800px;
   font-size: 50px;
   text-align: center;
+  color: #BBADA0;
+  font-size: 15px;
 }
 
 .Row {
@@ -21,9 +30,9 @@ body {
 
 .Container {
   display: flex;
-  justify-content: center;
   align-items: center;
   height: 95vh;
+  flex-direction: column;
 }
 
 .Board {
@@ -31,7 +40,7 @@ body {
   height: 600px;
   background-color: #BBADA0;
   border-radius: 10px;
-  padding: 10px;
+  padding: 15px;
 }
 
 .Cell {
@@ -44,7 +53,6 @@ body {
   align-items: center;
   font-size: 62px;
   font-weight: 600;
-  user-select: none;
 }
 
 .TileNum0 {
@@ -110,4 +118,10 @@ body {
   color: #f9f6f2;
   background: #edc22e;
   box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.55556), inset 0 0 0 1px rgba(255, 255, 255, 0.33333);
+}
+
+.TileNum4096 {
+  color: #f9f6f2;
+  background: #5dda92;
+  box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.63493), inset 0 0 0 1px rgba(255, 255, 255, 0.38095);
 }
