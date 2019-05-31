@@ -21,10 +21,14 @@ Contact: @uchicago.edu -->
   <script src="script.js"></script>
 
   <script>
-    Elm.Elm_2048.init({
+    var app = Elm.Elm_2048.init({
 			node: document.getElementById("elm-code-is-loaded-here"),
 			flags: Date.now()
 		});
+
+    app.ports.gameoverPopup.subscribe(function() {
+      app.ports.closePopup.send(window.alert("Game Over! Click OK then New Game to play again :)"))
+    });
 
   </script>
 

@@ -1,4 +1,4 @@
-module Elm_2048 exposing (..)
+port module Elm_2048 exposing (..)
 
 import Browser
 import Browser.Events
@@ -13,6 +13,9 @@ import Array
 import Json.Decode as Decode
 import List.Extra
 
+port gameoverPopup : () -> Cmd msg
+port closePopup : (()->msg) -> Sub msg
+
 -----------------------------------------------------
 -- Types and Aliases
 -----------------------------------------------------
@@ -21,7 +24,7 @@ type Meta = NewGame | OtherMeta
 
 type Direction = Left | Right | Up | Down | OtherDir
 
-type Msg = Tick | RandomPlay Play | Keystroke Direction | Gameover | Button Meta
+type Msg = Tick | RandomPlay Play | Keystroke Direction | Gameover | Button Meta | ClosePopup
 
 
 type alias Model = { board : Grid }
@@ -36,6 +39,7 @@ type alias Num = Int
 type alias Index = Int
 
 type alias Flags = Int
+
 -----------------------------------------------------
 -- For New Game (random with seed)
 -----------------------------------------------------
@@ -252,13 +256,14 @@ update msg model =
             update Gameover newModel
           else
             (newModel, Cmd.none)
-    Gameover -> (model, Cmd.none)
+    Gameover -> ( model, gameoverPopup () )
+    ClosePopup -> ( model, Cmd.none )
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
-        [ Browser.Events.onKeyDown (Decode.map Keystroke keyDecoder)
-        ]
+        [ Browser.Events.onKeyDown (Decode.map Keystroke keyDecoder),
+        closePopup (\() -> ClosePopup)]
 
 view : Model -> Html Msg
 view model =
