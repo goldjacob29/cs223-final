@@ -271,7 +271,7 @@ view model =
     rowViews = List.map viewRow model.board
     titleText = Html.text ("2048")
     subtitleText = Html.text ("by Alex & Jacob")
-    score = Html.text (Debug.toString 123456789)
+    score = Html.text (Debug.toString 123456789) --INPUT SCORE HERE
   in
      Html.div [Html.Attributes.class "Container"]
       [
