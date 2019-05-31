@@ -271,11 +271,13 @@ view model =
     rowViews = List.map viewRow model.board
     titleText = Html.text ("2048")
     subtitleText = Html.text ("by Alex & Jacob")
+    score = Html.text (Debug.toString 123456789)
   in
      Html.div [Html.Attributes.class "Container"]
       [
       Html.div [Html.Attributes.class "title"] [titleText],
       Html.div [Html.Attributes.class "subtitle"] [subtitleText],
+      Html.div [Html.Attributes.class "score"] [score],
       Html.div [Html.Attributes.class "newgame-button"] [Html.button [Html.Events.onClick (Button NewGame)] [text "New Game"]],
       Html.div [Html.Attributes.class "Board"] rowViews
       ]
