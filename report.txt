@@ -38,10 +38,16 @@ some data between our HTML and Elm files. We used a flag to get the time as it
 is used in our initial random seed and we used a port to display a final gameover
 popup message that was proving extremely difficult to do in Elm alone. 
 
-
 Thoughts on Elm:
 
-
+After building this game in Elm we both realized that we are big fans of this 
+progamming language. We specifically enjoyed learning more about the JavaScript
+Interop to see all the additional features we could implement by using flags and
+ports. While we wished debugging was a little simpler, the Debug.log method
+helped us by printing certain values to the console in Chrome, while the 
+compiler in terminal constantly helped us ensure all of our functions were 
+correctly annotated with the right types. We both agreed that Elm has the best 
+and most helpful error messages of any language we've ever seen.  
 
 
 
