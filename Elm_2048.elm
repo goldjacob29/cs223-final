@@ -17,43 +17,43 @@ import List.Extra
 -- Types and Aliases
 -----------------------------------------------------
 
-type alias Grid = List (List Num)
-
-type alias Model =
-  { board : Grid }
-
 type Meta = NewGame | OtherMeta
 
 type Direction = Left | Right | Up | Down | OtherDir
 
 type Msg = Tick | RandomPlay Play | Keystroke Direction | Gameover | Button Meta
 
-type alias Play =
-  {index : Index, num : Num}
 
--- top left = {0,0}
-type alias Loc = { row:Int, col:Int }
+type alias Model = { board : Grid }
+
+type alias Grid = List (List Num)
+
+type alias Play = {index : Index, num : Num}
+
+type alias Loc = { row:Int, col:Int } -- top left = {0,0}
 
 type alias Num = Int
 type alias Index = Int
 
 type alias Flags = Int
 -----------------------------------------------------
--- For initial State
+-- For New Game (random with seed)
 -----------------------------------------------------
+
+genTwoOrFour : Random.Seed -> (Int, Random.Seed)
 genTwoOrFour seed = Random.step (Random.weighted (75, 2) [(25,4)]) seed
 
-oldIndexList i ls =
-  case (i, ls) of
-    (_, []) -> Debug.todo "error"
-    (0, l::_) -> l
-    (_,_::rest) -> oldIndexList (i-1) rest
-
-pickEmptySquare : List Loc -> Random.Seed -> (Loc, Random.Seed)
+pickEmptySquare : List Index -> Random.Seed -> (Loc, Random.Seed)
 pickEmptySquare locs seed =
   let n = List.length locs
       (index, newSeed) = Random.step (Random.int 0 (n-1)) seed
-  in (oldIndexList index locs, newSeed)
+  in (indexToLoc (indexList index locs), newSeed)
+
+getSeed : List Num -> Index -> Int -> Int
+getSeed boardList index counter =
+  case boardList of
+    [] -> counter
+    (x::xs) -> getSeed xs (index+1) (counter + x * (index * 7))
 -----------------------------------------------------
 -- Logging
 -----------------------------------------------------
@@ -63,8 +63,38 @@ log s x =
   in case (Debug.log s stringX) of
     _ -> x
 -----------------------------------------------------
--- List Helper Functions
+-- List/Grid Functions
 -----------------------------------------------------
+
+-- 0 = empty
+emptyBoard : Grid
+emptyBoard = List.repeat 4 [0,0,0,0]
+
+locToIndex : Loc -> Index
+locToIndex loc = loc.row * 4 + loc.col
+
+indexToLoc : Index -> Loc
+indexToLoc i =
+  let row = i // 4
+      col = i - (row*4)
+  in Loc row col
+
+findEmptyIndices : List Num -> Index -> List Index
+findEmptyIndices nums index =
+  case nums of
+    [] -> []
+    (i::rest) ->
+      if i == 0 then
+        index :: findEmptyIndices rest (index+1)
+      else
+        findEmptyIndices rest (index+1)
+
+
+findEmpties : Grid -> List Index
+findEmpties board =
+  let flatBoard = List.concat board
+  in findEmptyIndices flatBoard 0
+
 
 -- find elem at index i
 indexList : Index -> List Num -> Num
@@ -80,6 +110,17 @@ flatten board = List.concat board
 
 unFlatten : List Num -> Grid
 unFlatten flatBoard = List.Extra.groupsOf 4 flatBoard
+
+playGenerator : List Index -> Generator Play
+playGenerator empties =
+  let n = List.length empties
+  in Random.map2 Play (Random.int 0 (n-1)) (Random.weighted (75, 2) [(25,4)])
+
+
+placeVal : Loc -> Num -> Grid -> Grid
+placeVal loc num board =
+  let flatInserted = List.Extra.setAt (locToIndex loc) num (flatten board)
+  in unFlatten flatInserted
 
 combine : List Num -> List Num
 combine row =
@@ -111,6 +152,27 @@ up ls = (List.Extra.transpose << left << List.Extra.transpose) ls
 down : Grid -> Grid
 down ls = (List.Extra.transpose << right << List.Extra.transpose) ls
 
+canMoveLeft : Grid -> Bool
+canMoveLeft g = left g /= g
+
+canMoveRight : Grid -> Bool
+canMoveRight g = right g /= g
+
+canMoveUp : Grid -> Bool
+canMoveUp g = up g /= g
+
+canMoveDown : Grid -> Bool
+canMoveDown g = down g /= g
+
+movesExist : Grid -> Bool
+movesExist g =
+  if canMoveLeft g then True
+  else if canMoveRight g then True
+  else if canMoveUp g then True
+  else if canMoveDown g then True
+  else False
+
+
 
 -----------------------------------------------------
 -- MVC Functions
@@ -135,20 +197,14 @@ initModel currentTime =
       board = emptyBoard
       empties = findEmpties board
       (num1, seed1) = genTwoOrFour seed
-      (loc1, seed2) = pickEmptySquare (List.map indexToLoc empties) seed1
+      (loc1, seed2) = pickEmptySquare empties seed1
       board1 = placeVal loc1 num1 board
 
       empties1 = findEmpties board1
       (num2, seed3) = genTwoOrFour seed2
-      (loc2, seed4) = pickEmptySquare (List.map indexToLoc empties) seed3
+      (loc2, seed4) = pickEmptySquare empties1 seed3
       board2 = placeVal loc2 num2 board1
   in {board=board2}
-
-getSeed : List Num -> Index -> Int -> Int
-getSeed boardList index counter =
-  case boardList of
-    [] -> counter
-    (x::xs) -> getSeed xs (index+1) (counter + x * (index * 7))
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -187,7 +243,6 @@ update msg model =
       in (model, Random.generate RandomPlay (playGenerator empties))
     RandomPlay {index, num} ->
       let empties = findEmpties model.board
-          elem = indexList index empties
           loc = indexToLoc (indexList index empties)
           newBoard = placeVal loc num model.board
           newModel = {model | board = newBoard}
@@ -197,58 +252,12 @@ update msg model =
             update Gameover newModel
           else
             (newModel, Cmd.none)
-    Gameover -> update (Button NewGame) model
-
-
-canMoveLeft : Grid -> Bool
-canMoveLeft g = left g /= g
-
-canMoveRight : Grid -> Bool
-canMoveRight g = right g /= g
-
-canMoveUp : Grid -> Bool
-canMoveUp g = up g /= g
-
-canMoveDown : Grid -> Bool
-canMoveDown g = down g /= g
-
-movesExist : Grid -> Bool
-movesExist g =
-  if canMoveLeft g then True
-  else if canMoveRight g then True
-  else if canMoveUp g then True
-  else if canMoveDown g then True
-  else False
-
-keyDecoder : Decode.Decoder Direction
-keyDecoder =
-  Decode.map toDirection (Decode.field "key" Decode.string)
-
-toDirection : String -> Direction
-toDirection string =
-  case string of
-    "ArrowLeft" -> Left
-    "ArrowRight" -> Right
-    "ArrowUp" -> Up
-    "ArrowDown" ->  Down
-    _ -> OtherDir
-
-metaDecoder : Decode.Decoder Meta
-metaDecoder =
-  Decode.map toMeta (Decode.field "key" Decode.string)
-
-
-toMeta : String -> Meta
-toMeta string =
-  case string of
-    "n" -> NewGame
-    _ -> OtherMeta
+    Gameover -> (model, Cmd.none)
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
-        [ Browser.Events.onKeyDown (Decode.map Keystroke keyDecoder),
-          Browser.Events.onKeyDown (Decode.map Button metaDecoder)
+        [ Browser.Events.onKeyDown (Decode.map Keystroke keyDecoder)
         ]
 
 view : Model -> Html Msg
@@ -277,46 +286,18 @@ viewCell : Num -> Html Msg
 viewCell num = Html.div [Html.Attributes.class ("Cell TileNum" ++ Debug.toString num)] [Html.text (String.fromInt num)]
 
 -----------------------------------------------------
--- Other Helpers
+-- User Input
 -----------------------------------------------------
 
--- 0 = empty
-emptyBoard : Grid
-emptyBoard = List.repeat 4 [0,0,0,0]
+keyDecoder : Decode.Decoder Direction
+keyDecoder =
+  Decode.map toDirection (Decode.field "key" Decode.string)
 
-locToIndex : Loc -> Index
-locToIndex loc = loc.row * 4 + loc.col
-
-indexToLoc : Index -> Loc
-indexToLoc i =
-  let row = i // 4
-      col = i - (row*4)
-  in Loc row col
-
-findEmptyIndices : List Num -> Index -> List Index
-findEmptyIndices nums index =
-  case nums of
-    [] -> []
-    (i::rest) ->
-      if i == 0 then
-        index :: findEmptyIndices rest (index+1)
-      else
-        findEmptyIndices rest (index+1)
-
-
-findEmpties : Grid -> List Index
-findEmpties board =
-  let flatBoard = List.concat board
-  in findEmptyIndices flatBoard 0
-
-
-playGenerator : List Index -> Generator Play
-playGenerator empties =
-  let n = List.length empties
-  in Random.map2 Play (Random.int 0 (n-1)) (Random.weighted (75, 2) [(25,4)])
-
-
-placeVal : Loc -> Num -> Grid -> Grid
-placeVal loc num board =
-  let flatInserted = List.Extra.setAt (locToIndex loc) num (flatten board)
-  in unFlatten flatInserted
+toDirection : String -> Direction
+toDirection string =
+  case string of
+    "ArrowLeft" -> Left
+    "ArrowRight" -> Right
+    "ArrowUp" -> Up
+    "ArrowDown" ->  Down
+    _ -> OtherDir

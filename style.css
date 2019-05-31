@@ -7,12 +7,27 @@ body {
   width: 600px;
   font-size: 80px;
   text-align: center;
+  color: #BBADA0;
+  font-weight: bold;
+  font-size: 30px;
 }
 
 .subtitle {
   width: 600px;
+  padding-top: -800px;
   font-size: 50px;
   text-align: center;
+  color: #BBADA0;
+  font-size: 15px;
+}
+
+.newgame-button {
+/*  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;*/
 }
 
 .Row {
@@ -21,9 +36,9 @@ body {
 
 .Container {
   display: flex;
-  justify-content: center;
   align-items: center;
   height: 95vh;
+  flex-direction: column;
 }
 
 .Board {
@@ -31,7 +46,7 @@ body {
   height: 600px;
   background-color: #BBADA0;
   border-radius: 10px;
-  padding: 10px;
+  padding: 15px;
 }
 
 .Cell {
@@ -44,7 +59,6 @@ body {
   align-items: center;
   font-size: 62px;
   font-weight: 600;
-  user-select: none;
 }
 
 .TileNum0 {
